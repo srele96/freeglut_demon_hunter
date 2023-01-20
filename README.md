@@ -4,8 +4,6 @@ ConsoleApplication1 because I am just playing around with freeglut library.
 
 ## Windows setup
 
-TODO: Setup library from scratch, follow these instructions and clarify and unclear setup steps.
-
 ### Generate freeglut project for Visual Studio using CMake
 
 These instructions are located at [README.cmake](./deps/freeglut-3.4.0/README.cmake), I modified them for my own use case to be much more specific.
