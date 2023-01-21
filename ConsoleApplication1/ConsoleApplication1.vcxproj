@@ -110,7 +110,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)deps\SDL2-2.26.2\lib\x64;$(SolutionDir)deps\glew-1.7.0\lib;$(SolutionDir)deps\freeglut-3.4.0\build\lib\Debug</AdditionalLibraryDirectories>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);freeglutd.lib;freeglut_staticd.lib;glew32.lib;SDL2.lib;SDL2main.lib;</AdditionalDependencies>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);freeglutd.lib;freeglut_staticd.lib;glew32.lib;SDL2.lib;SDL2main.lib;opengl32.lib;</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y "$(SolutionDir)deps\DLLS\*.dll" "$(TargetDir)"</Command>
