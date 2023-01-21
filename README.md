@@ -2,6 +2,10 @@
 
 ConsoleApplication1 because I am just playing around with freeglut library.
 
+## Exposing dynamic libraries to the program
+
+Place the dynamic libraries to this location: [deps\DLLS](./deps/DLLS).
+
 ## Windows setup
 
 ### Generate freeglut project for Visual Studio using CMake
