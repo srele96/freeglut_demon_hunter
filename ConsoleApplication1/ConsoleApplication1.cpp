@@ -34,9 +34,9 @@ bool init_resources() {
   const char* fs_Source =
       "#version 120\n"
       "void main() {"
-      "  gl_FragColor[0] = 0.0;"
-      "  gl_FragColor[1] = 0.0;"
-      "  gl_FragColor[2] = 1.0;"
+      "  gl_FragColor[0] = gl_FragCoord.x / 680;"
+      "  gl_FragColor[1] = gl_FragCoord.y / 480;"
+      "  gl_FragColor[2] = 0.5;"
       "}";
   glShaderSource(fs, 1, &fs_Source, NULL);
   glCompileShader(fs);
