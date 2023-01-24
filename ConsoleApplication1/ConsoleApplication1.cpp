@@ -74,12 +74,13 @@ void render(SDL_Window* window) {
   glUseProgram(program);
   glEnableVertexAttribArray(attribute_coord2d);
 
-  GLfloat triangle_vertices[]{0.0, 0.8, -0.8, -0.8, 0.8, -0.8};
+  GLfloat triangle_vertices[]{-.8, .8, -.8, -.8, .8, -.8,
+                              -.8, .8, .8,  .8,  .8, -.8};
 
   glVertexAttribPointer(attribute_coord2d, 2, GL_FLOAT, GL_FALSE, 0,
                         triangle_vertices);
 
-  glDrawArrays(GL_TRIANGLES, 0, 3);
+  glDrawArrays(GL_TRIANGLES, 0, 6);
 
   glDisableVertexAttribArray(attribute_coord2d);
 
