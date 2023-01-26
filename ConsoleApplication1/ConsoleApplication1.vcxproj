@@ -135,6 +135,10 @@
   <ItemGroup>
     <ClCompile Include="ConsoleApplication1.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="triangle.f.glsl" />
+    <None Include="triangle.v.glsl" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

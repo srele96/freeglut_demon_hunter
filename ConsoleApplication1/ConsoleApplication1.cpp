@@ -3,48 +3,109 @@
 
 GLuint program;
 GLint attribute_coord2d;
+GLuint vbo_triangle;
 
 #include <cstdlib>
 #include <iostream>
 
+char* file_read(const char* filename) {
+  SDL_RWops* rw = SDL_RWFromFile(filename, "rb");
+  if (rw == NULL) return NULL;
+
+  Sint64 res_size = SDL_RWsize(rw);
+  char* res = (char*)malloc(res_size + 1);
+
+  Sint64 nb_read_total = 0;
+  Sint64 nb_read = 1;
+  char* buf = res;
+  while (nb_read_total < res_size && nb_read != 0) {
+    nb_read = SDL_RWread(rw, buf, 1, (res_size - nb_read_total));
+    nb_read_total += nb_read;
+    buf += nb_read;
+  }
+  SDL_RWclose(rw);
+  if (nb_read_total != res_size) {
+    free(res);
+    return NULL;
+  }
+
+  res[nb_read_total] = '\0';
+  return res;
+}
+
+void print_log(GLuint object) {
+  GLint log_length = 0;
+  if (glIsShader(object)) {
+    glGetShaderiv(object, GL_INFO_LOG_LENGTH, &log_length);
+  } else if (glIsProgram(object)) {
+    glGetProgramiv(object, GL_INFO_LOG_LENGTH, &log_length);
+  } else {
+    std::cerr << "print_log: Not a shader or program\n";
+    return;
+  }
+
+  char* log = (char*)malloc(log_length);
+
+  if (glIsShader(object)) {
+    glGetShaderInfoLog(object, log_length, NULL, log);
+  } else if (glIsProgram(object)) {
+    glGetProgramInfoLog(object, log_length, NULL, log);
+  }
+
+  std::cerr << log << "\n";
+  free(log);
+}
+
+GLuint create_shader(const char* filename, GLenum type) {
+  const GLchar* source = file_read(filename);
+  if (source == NULL) {
+    std::cerr << "Error opening " << filename << ": " << SDL_GetError() << "\n";
+    return 0;
+  }
+
+  GLuint res = glCreateShader(type);
+  const GLchar* sources[]{
+#ifdef GL_ES_VERSION_2_0
+      "#version 100\n"  // OpenGL ES 2.0
+#else
+      "#version 120\n"  // OpenGL 2.1
+#endif
+      ,
+      source};
+
+  glShaderSource(res, 2, sources, NULL);
+  free((void*)source);
+
+  glCompileShader(res);
+  GLint compile_ok = GL_FALSE;
+  glGetShaderiv(res, GL_COMPILE_STATUS, &compile_ok);
+  if (compile_ok == GL_FALSE) {
+    std::cerr << filename << ":";
+    print_log(res);
+    glDeleteShader(res);
+    return 0;
+  }
+
+  return res;
+}
+
 bool init_resources() {
+  GLfloat triangle_vertices[]{0.0, 0.8, -0.8, -0.8, 0.8, -0.8};
+  glGenBuffers(1, &vbo_triangle);
+  glBindBuffer(GL_ARRAY_BUFFER, vbo_triangle);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(triangle_vertices), triangle_vertices,
+               GL_STATIC_DRAW);
+
   GLint compile_ok = GL_FALSE;
   GLint link_ok = GL_FALSE;
 
   // Calculate pixels on the screen
-  GLuint vs = glCreateShader(GL_VERTEX_SHADER);
-  const char* vs_source =
-      "#version 120\n"
-      "attribute vec2 coord2d;"
-      "void main(void) {"
-      "  gl_Position = vec4(coord2d, 0.0, 1.0);"
-      "}";
-
-  glShaderSource(vs, 1, &vs_source, NULL);
-  glCompileShader(vs);
-  glGetShaderiv(vs, GL_COMPILE_STATUS, &compile_ok);
-
-  if (!compile_ok) {
-    std::cerr << "Error in vertex shader\n";
-    return false;
-  }
+  GLuint vs = create_shader("triangle.v.glsl", GL_VERTEX_SHADER);
+  if (vs == 0) return false;
 
   // Color pixels on the screen
-  GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
-  const char* fs_Source =
-      "#version 120\n"
-      "void main() {"
-      "  gl_FragColor[0] = gl_FragCoord.x / 680;"
-      "  gl_FragColor[1] = gl_FragCoord.y / 480;"
-      "  gl_FragColor[2] = 0.5;"
-      "}";
-  glShaderSource(fs, 1, &fs_Source, NULL);
-  glCompileShader(fs);
-  glGetShaderiv(fs, GL_COMPILE_STATUS, &compile_ok);
-  if (!compile_ok) {
-    std::cerr << "Error in fragment shader\n";
-    return false;
-  }
+  GLuint fs = create_shader("triangle.f.glsl", GL_FRAGMENT_SHADER);
+  if (fs == 0) return false;
 
   // Link program with shaders
   program = glCreateProgram();
@@ -54,6 +115,7 @@ bool init_resources() {
   glGetProgramiv(program, GL_LINK_STATUS, &link_ok);
   if (!link_ok) {
     std::cerr << "Error in glLinkProgram\n";
+    print_log(program);
     return false;
   }
 
@@ -72,13 +134,12 @@ void render(SDL_Window* window) {
   glClear(GL_COLOR_BUFFER_BIT);
 
   glUseProgram(program);
+
+  glBindBuffer(GL_ARRAY_BUFFER, vbo_triangle);
+
   glEnableVertexAttribArray(attribute_coord2d);
 
-  GLfloat triangle_vertices[]{-.8, .8, -.8, -.8, .8, -.8,
-                              -.8, .8, .8,  .8,  .8, -.8};
-
-  glVertexAttribPointer(attribute_coord2d, 2, GL_FLOAT, GL_FALSE, 0,
-                        triangle_vertices);
+  glVertexAttribPointer(attribute_coord2d, 2, GL_FLOAT, GL_FALSE, 0, 0);
 
   glDrawArrays(GL_TRIANGLES, 0, 6);
 
@@ -99,7 +160,10 @@ void main_loop(SDL_Window* window) {
   }
 }
 
-void free_resources() { glDeleteProgram(program); }
+void free_resources() {
+  glDeleteProgram(program);
+  glDeleteBuffers(1, &vbo_triangle);
+}
 
 int main(int argc, char* argv[]) {
   SDL_Init(SDL_INIT_VIDEO);
