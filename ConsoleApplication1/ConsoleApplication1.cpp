@@ -170,7 +170,18 @@ int main(int argc, char* argv[]) {
   SDL_Window* window = SDL_CreateWindow(
       "My first triangle", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640,
       480, SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
-  SDL_GL_CreateContext(window);
+
+  if (window == NULL) {
+    std::cerr << "Error: Ca't create window\n";
+    return EXIT_FAILURE;
+  }
+
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+  SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 1);
+  if (SDL_GL_CreateContext(window) == NULL) {
+    std::cerr << "Error: SDL_GL_CreateContext " << SDL_GetError() << "\n";
+    return EXIT_FAILURE;
+  }
 
   GLenum glew_status = glewInit();
   if (glew_status != GLEW_OK) {
@@ -179,10 +190,17 @@ int main(int argc, char* argv[]) {
     return EXIT_FAILURE;
   }
 
+  if (!GLEW_VERSION_2_0) {
+    std::cerr << "Error. Your graphics card doesn't support OpenGL 2.0\n";
+    return EXIT_FAILURE;
+  }
+
   if (!init_resources()) {
     return EXIT_FAILURE;
   }
 
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   main_loop(window);
 
   free_resources();
